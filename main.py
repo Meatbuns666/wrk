@@ -6,7 +6,7 @@ import requests
 import time
 
 # Telegram Bot token
-BOT_TOKEN = "8186635677:AAHzO7cLQbegebCvXgQKi3sYj53xLysVm-I"
+BOT_TOKEN = "8094008450:AAFCswCR7bA_eWtBGc_tlH9vnSTYtvs5GZE"
 BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/"
 
 # 函数：发送消息到指定用户
