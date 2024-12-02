@@ -8,7 +8,7 @@
  const fs = require("fs");
  const axios = require('axios');
  const cheerio = require('cheerio'); 
- const gradient = require("gradient-string")
+ import gradient from "gradient-string";
 
  process.setMaxListeners(0);
  require("events").EventEmitter.defaultMaxListeners = 0;
