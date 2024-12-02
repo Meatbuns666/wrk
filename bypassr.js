@@ -1,4 +1,3 @@
-// 黑客Ddos交流群 @heikeddos 频道 @ddosheike
 // 导入必要的模块
 const net = require("net"); // 网络模块，用于创建服务器和客户端连接
 const http2 = require("http2"); // HTTP/2 模块，用于处理 HTTP/2 协议
