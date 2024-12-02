@@ -1,4 +1,3 @@
-// 黑客Ddos交流群 @heikeddos 频道 @ddosheike
 // 导入所需模块
 const url = require('url');
 const fs = require('fs');
