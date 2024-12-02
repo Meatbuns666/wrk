@@ -1,4 +1,3 @@
-// 黑客Ddos交流群 @heikeddos 频道 @ddosheike
 process.on('uncaughtException', function(er) {
     console.log(er);
 });
