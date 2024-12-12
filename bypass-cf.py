@@ -52,9 +52,8 @@ def send_request(target_url, cookies, useragent, proxy):
                 "Upgrade-Insecure-Requests": "1"
             }
         )
-        # Set cookies manually
-        for cookie in cookies:
-            context.add_cookies([cookie])
+        # Manually set cookies
+        context.add_cookies(cookies)
         
         page = context.new_page()
         while True:
@@ -77,7 +76,7 @@ def main(target_url, num_threads):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python3 script_name.py <target_url> <num_threads>")
+        print("Usage: python3 bypass-cf.py <target_url> <num_threads>")
         sys.exit(1)
     target_url = sys.argv[1]
     num_threads = int(sys.argv[2])
