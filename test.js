@@ -1,5 +1,3 @@
-// 黑客Ddos交流群 @heikeddos 频道 @ddosheike
-// 导入所需模块
 const url = require('url');
 const fs = require('fs');
 const http2 = require('http2');
@@ -435,3 +433,5 @@ if (cluster.isMaster) {
 const client = http2.connect(parsed.href, clientOptions, function() {
     // 处理成功后的连接
 });
+
+这个代码中传入的代理文件里的代理应该什么格式
